@@ -10,13 +10,27 @@ BASIC_STRATEGY = {
 }
 
 def hand_value(hand):
+    """
+    Calculates the best possible hand value in Blackjack.
+    Handles Aces as either 1 or 11.
+    :param hand: List of card values.
+    :return: Best possible hand value.
+    """
     value = sum(CARD_VALUES[card] for card in hand)
     num_aces = hand.count('A')
+    
+    # Convert Aces from 11 to 1 if necessary to avoid busting
     while value > 21 and num_aces:
         value -= 10
         num_aces -= 1
     return value
 
 def basic_strategy(player_hand, dealer_upcard):
+    """
+    Determines the optimal move based on basic Blackjack strategy.
+    :param player_hand: List of player's cards.
+    :param dealer_upcard: Dealer's visible card.
+    :return: Suggested move ('H' = Hit, 'S' = Stand, 'D' = Double Down, etc.).
+    """
     player_total = hand_value(player_hand)
     return BASIC_STRATEGY.get((player_total, dealer_upcard), 'H')
