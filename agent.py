@@ -20,6 +20,7 @@ class BlackjackAgent:
         """
         Determines bet amount using card counting.
         Higher bets are placed when the count is in the player's favor.
+        TODO: We have to figure out how card counting actually works
         :return: Bet amount.
         """
         return self.base_bet * max(1, round(self.env.counter.true_count()))
@@ -43,6 +44,7 @@ class BlackjackAgent:
 
         # Make decisions based on basic strategy
         while hand_value(player_hand) < 21:
+            # TODO: Add other actions based on what move was chosen
             move = basic_strategy(player_hand, dealer_upcard)
             if move == 'H':  # Hit
                 new_card = self.env.deal_card()
