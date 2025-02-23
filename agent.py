@@ -12,9 +12,12 @@ class BlackjackAgent:
         return bet
         
     def play_turn(self, dealer_upcard, env):
+        actions = []
         while hand_value(self.hand) < 21:
             action = basic_strategy(self.hand, dealer_upcard)
+            actions.append(action)
             if action == 'H':
                 self.hand.append(env.deal())
             else:
                 break
+        return actions
