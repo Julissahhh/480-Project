@@ -118,4 +118,9 @@ def play_game(num_rounds, num_agents):
     game.run_simulation(num_rounds)
 
 if __name__ == "__main__":
-    play_game(3, 1)
+    print("Would you like to run a simulation or play the game?")
+    choice = input("Choice (0=Play, 1=Simulate): ")
+    if choice == "1":
+        play_game(4, 1)
+    else:
+        simulate_game(15, 3)
