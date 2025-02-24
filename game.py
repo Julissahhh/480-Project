@@ -1,4 +1,6 @@
 from utils import hand_value
+from environment import BlackjackEnvironment
+from agent import BlackjackAgent, HumanAgent
 
 class BlackjackGame:
     def __init__(self, env, agents):
@@ -62,7 +64,7 @@ class BlackjackGame:
         return results
     
     def run_simulation(self, num_rounds=10):
-        for round_num in range(num_rounds):
+        for round_num in range(1, num_rounds + 1):
             print(f"\n===== ROUND {round_num} =====")
             print(f"True Count: {self.env.true_count:.2f}")
             # first things first, place the bets
@@ -89,7 +91,7 @@ class BlackjackGame:
             print(f"\n--- Round {round_num} Results ---")
             results = self.resolve_bets()
             for i, result in enumerate(results):
-                print(f"Player {i}", end=" ")
+                print(f"Player {i+1}", end=" ")
                 if result == 1:
                     self.agents[i].bankroll += bets[i] * 2
                     print(f"-> Win! Won ${bets[i]},", end=" ")
@@ -103,10 +105,17 @@ class BlackjackGame:
                     print(f"Lost ${bets[i]},", end=" ")
                 print(f"bankroll after round: {self.agents[i].bankroll}")
 
-if __name__ == "__main__":
-    from environment import BlackjackEnvironment
-    from agent import BlackjackAgent
+def simulate_game(num_rounds, num_agents):
     env = BlackjackEnvironment()
-    agents = [BlackjackAgent() for _ in range(2)]
+    agents = [BlackjackAgent() for _ in range(num_agents)]
     game = BlackjackGame(env, agents)
-    game.run_simulation(num_rounds=10)
+    game.run_simulation(num_rounds)
+
+def play_game(num_rounds, num_agents):
+    env = BlackjackEnvironment()
+    agents = [HumanAgent(), *[BlackjackAgent() for _ in range(num_agents)]]
+    game = BlackjackGame(env, agents)
+    game.run_simulation(num_rounds)
+
+if __name__ == "__main__":
+    play_game(3, 1)
