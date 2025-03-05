@@ -1,6 +1,18 @@
 from typing import List
 from environment import Card
+from enum import Enum
 
+class Action(str, Enum):
+    HIT = "hit"
+    STAND = "stand"
+    DOUBLE = "double"
+    SPLIT = "split"
+
+class GameState(str, Enum):
+    BETTING = "betting"
+    PLAYER_TURN = "player_turn"
+    DEALER_TURN = "dealer_turn"
+    RESOLUTION = "resolution"
 # We wil probably need multiple 2D tables later
 # using a simplified strategy function for now
 BASIC_STRATEGY = {
@@ -23,25 +35,36 @@ def hand_value(hand: List[Card]) -> int:
         aces -= 1
     return total
 
-def basic_strategy(player_hand: List[Card], dealer_card: Card) -> str:
-    # refactor this later to use proper strategy
-    # this is very simple and not optimal
-    total: int = hand_value(player_hand)
-    dealer_val: int = dealer_card.value()
 
-    # Check for pairs and allow splitting Aces or 8s.
+def basic_strategy(player_hand: List[Card], dealer_card: Card) -> Action:
+    """Simplified basic strategy implementation"""
+    total = hand_value(player_hand)
+    dealer_val = dealer_card.value()
+
+    # Pair splitting
     if len(player_hand) == 2 and player_hand[0] == player_hand[1]:
-        if player_hand[0].get_face() in ['A', '8']:
-            return "split"
+        if player_hand[0].face == 1:  # Aces
+            return Action.SPLIT
+        if player_hand[0].face == 8:  # Eights
+            return Action.SPLIT
 
-    # For totals 17 or more, stand.
+    # Soft totals (Ace + other card)
+    if any(c.is_ace() for c in player_hand) and len(player_hand) == 2:
+        if total >= 19:
+            return Action.STAND
+        if total == 18 and dealer_val >= 9:
+            return Action.STAND
+        return Action.HIT
+
+    # Hard totals
     if total >= 17:
-        return "stand"
-    # For totals between 13 and 16, stand if dealer shows a weak card (2–6), otherwise hit.
+        return Action.STAND
     if 13 <= total <= 16:
-        return "stand" if 2 <= dealer_val <= 6 else "hit"
-    # For a total of 12, stand if dealer shows 4–6, otherwise hit.
+        return Action.STAND if dealer_val <= 6 else Action.HIT
     if total == 12:
-        return "stand" if 4 <= dealer_val <= 6 else "hit"
-    # In all other cases, hit.
-    return "hit"
+        return Action.STAND if 4 <= dealer_val <= 6 else Action.HIT
+    if total == 11:
+        return Action.DOUBLE
+    if total == 10:
+        return Action.DOUBLE if dealer_val <= 9 else Action.HIT
+    return Action.HIT
