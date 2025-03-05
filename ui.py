@@ -1,7 +1,8 @@
 from typing import List
 from environment import Card
-from utils import Action
+from utils import Action, hand_value
 
+# A bit of an experiment
 class ConsoleUI:
     @staticmethod
     def prompt_bet(bankroll: int) -> int:
@@ -25,7 +26,6 @@ class ConsoleUI:
 
     @staticmethod
     def display_hand(hand: List[Card], title: str) -> None:
-        from utils import hand_value
         print(f"{title}: {hand} (Value: {hand_value(hand)})")
 
     @staticmethod
@@ -33,17 +33,24 @@ class ConsoleUI:
         print(f"\nDealer's Upcard: {card}")
 
     @staticmethod
-    def show_round_result(agent_id: int, results: List[float], bankroll: float) -> None:
-        print(f"\nPlayer {agent_id} Results:")
-        for i, result in enumerate(results):
-            if result == 1.5:
-                print(f"Hand {i+1}: Blackjack! +{result}x bet")
-            elif result >= 0:
-                print(f"Hand {i+1}: {'Win' if result > 0 else 'Push'} ({result}x)")
-            else:
-                print(f"Hand {i+1}: Loss (-1x)")
-        print(f"New Bankroll: ${bankroll:.2f}")
-
-    @staticmethod
     def show_dealer_action(action: str, card: Card, total: int) -> None:
         print(f"Dealer {action}: {card} (Total: {total})")
+
+    @staticmethod
+    def show_round_result(agent_id: int, results: List[float], bets: List[int], bankroll: float) -> None:
+        print(f"\nPlayer {agent_id} Results:")
+        for i, result in enumerate(results):
+            bet = bets[i]
+            if result == 1.5:
+                payout = bet * 2.5
+                print(f"Hand {i+1}: Blackjack! Bet: ${bet} -> Payout: ${payout} (Win: ${payout - bet})")
+            elif result == 1:
+                payout = bet * 2
+                print(f"Hand {i+1}: Win! Bet: ${bet} -> Payout: ${payout} (Win: ${payout - bet})")
+            elif result == 0:
+                print(f"Hand {i+1}: Push! Bet returned: ${bet}")
+            elif result == -1:
+                print(f"Hand {i+1}: Loss! Lost: ${bet}")
+            else:
+                print(f"Hand {i+1}: Unknown result multiplier: {result}")
+        print(f"New Bankroll: ${bankroll:.2f}")
