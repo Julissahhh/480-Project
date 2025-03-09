@@ -83,7 +83,7 @@ class BlackjackEnvironment:
     and manages dealing and the Hi-Lo running count.
     """
 
-    def __init__(self, num_decks: int = 6) -> None:
+    def __init__(self, num_decks: int = 4) -> None:
         self.num_decks: int = num_decks
         self.deck: List[Card] = []
         self.running_count: int = 0

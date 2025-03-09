@@ -41,12 +41,11 @@ class ConsoleUI:
         print(f"\nPlayer {agent_id} Results:")
         for i, result in enumerate(results):
             bet = bets[i]
+            payout = bet * result
             if result == 1.5:
-                payout = bet * 2.5
-                print(f"Hand {i+1}: Blackjack! Bet: ${bet} -> Payout: ${payout} (Win: ${payout - bet})")
+                print(f"Hand {i+1}: Blackjack! Bet: ${bet} -> Payout: ${payout}")
             elif result == 1:
-                payout = bet * 2
-                print(f"Hand {i+1}: Win! Bet: ${bet} -> Payout: ${payout} (Win: ${payout - bet})")
+                print(f"Hand {i+1}: Win! Bet: ${bet} -> Payout: ${payout}")
             elif result == 0:
                 print(f"Hand {i+1}: Push! Bet returned: ${bet}")
             elif result == -1:
