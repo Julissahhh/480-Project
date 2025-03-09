@@ -58,34 +58,18 @@ def hand_value(hand: List[Card]) -> int:
 
 
 def basic_strategy(player_hand: List[Card], dealer_card: Card) -> Action:
-    """Simplified basic strategy implementation"""
+    """Determines the action based on the player's hand and dealer's upcard using the basic strategy table."""
     total = hand_value(player_hand)
-    dealer_val = dealer_card.value()
+    dealer_val = dealer_card.get_face()  # Convert to human-readable face value (e.g., '2', '3', ..., '10', 'A')
 
-    # Pair splitting
-    if len(player_hand) == 2 and player_hand[0] == player_hand[1]:
-        if player_hand[0].face == 1:  # Aces
-            return Action.SPLIT
-        if player_hand[0].face == 8:  # Eights
-            return Action.SPLIT
+    # Format the player's hand for lookup
+    if len(player_hand) == 2 and player_hand[0] == player_hand[1]:  # Pair splitting case
+        hand_key = (f"{player_hand[0].get_face()}{player_hand[1].get_face()}", dealer_val)
+    elif any(c.is_ace() for c in player_hand) and len(player_hand) == 2:  # Soft total case
+        non_ace_card = next(c for c in player_hand if not c.is_ace())
+        hand_key = (f"A{non_ace_card.get_face()}", dealer_val)
+    else:  # Hard total case
+        hand_key = (total, dealer_val)
 
-    # Soft totals (Ace + other card)
-    if any(c.is_ace() for c in player_hand) and len(player_hand) == 2:
-        if total >= 19:
-            return Action.STAND
-        if total == 18 and dealer_val >= 9:
-            return Action.STAND
-        return Action.HIT
-
-    # Hard totals
-    if total >= 17:
-        return Action.STAND
-    if 13 <= total <= 16:
-        return Action.STAND if dealer_val <= 6 else Action.HIT
-    if total == 12:
-        return Action.STAND if 4 <= dealer_val <= 6 else Action.HIT
-    if total == 11:
-        return Action.DOUBLE
-    if total == 10:
-        return Action.DOUBLE if dealer_val <= 9 else Action.HIT
-    return Action.HIT
+    # Look up the action in BASIC_STRATEGY; default to 'hit' if not found
+    return Action(BASIC_STRATEGY.get(hand_key, 'hit'))
