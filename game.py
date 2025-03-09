@@ -12,6 +12,12 @@ class BlackjackGame:
         self.dealer_hand: List[Card] = []
         self.ui = ConsoleUI()
 
+    def place_bets(self) -> None:
+        print(f"True Count: {self.env.true_count:.2f}")
+        for agent in self.agents:
+            bet = agent.place_bet(self.env.true_count)
+            print(f"Player {agent.id} bets: ${bet}")
+
     def initialize_new_round(self) -> Card:
         if self.env.remaining_cards() < 52:
             self.env.reset()
@@ -25,11 +31,6 @@ class BlackjackGame:
             agent.hands = [[self.env.deal(), self.env.deal()]]  # Initialize with one hand
         return dealer_upcard
 
-    def place_bets(self) -> None:
-        print(f"True Count: {self.env.true_count:.2f}")
-        for agent in self.agents:
-            bet = agent.place_bet(self.env.true_count)
-            print(f"Player {agent.id} bets: ${bet}")
 
     def play_agent_turns(self, dealer_upcard: Card):
         for agent in self.agents:
@@ -47,11 +48,17 @@ class BlackjackGame:
         if dealer_score == 21 and len(self.dealer_hand) == 2:
             return
 
+        # stand on soft 17
         while dealer_score < 17:
             new_card = self.env.deal()
             self.dealer_hand.append(new_card)
             dealer_score = hand_value(self.dealer_hand)
             self.ui.show_dealer_action("draws", new_card, dealer_score)
+
+    def finalize_round(self, round_num: int) -> None:
+        results = self.resolve_bets()
+        self.process_payouts(results)
+        self.remove_broke_agents(round_num)
 
     def resolve_bets(self) -> List[List[float]]:
         dealer_score = hand_value(self.dealer_hand)
@@ -84,16 +91,16 @@ class BlackjackGame:
             total_win = 0
             for i, result in enumerate(agent_results):
                 bet = agent.hand_bets[i]
-                payout = bet * (result + 1)
-                win_loss = payout - bet
-                total_win += win_loss
+                payout = round(bet * result)
+                total_win += payout
             agent.adjust_bankroll(total_win)
             self.ui.show_round_result(agent.id, agent_results, agent.hand_bets, agent.bankroll)
+            agent.clear_bets()
 
     def remove_broke_agents(self, round_num: int) -> None:
         remaining = []
         for agent in self.agents:
-            if agent.bankroll < 0:
+            if agent.bankroll <= 0:
                 agent.broke_round = round_num
                 print(f"Player {agent.id} went broke in round {round_num}!")
                 self.dropped_agents.append(agent)
@@ -101,10 +108,6 @@ class BlackjackGame:
                 remaining.append(agent)
         self.agents = remaining
 
-    def finalize_round(self, round_num: int) -> None:
-        results = self.resolve_bets()
-        self.process_payouts(results)
-        self.remove_broke_agents(round_num)
 
     def run_simulation(self, num_rounds: int = 10) -> None:
         round_num = 1
@@ -144,11 +147,11 @@ def main():
     if choice == "0":
         agents = [HumanAgent(), BlackjackAgent()]
         game = BlackjackGame(env, agents)
-        game.run_simulation(num_rounds=10)
+        game.run_simulation(num_rounds=5)
     else:
         agents = [BlackjackAgent() for _ in range(3)]
         game = BlackjackGame(env, agents)
-        game.run_simulation(num_rounds=20)
+        game.run_simulation(num_rounds=40)
 
 if __name__ == "__main__":
     main()
