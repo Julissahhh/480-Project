@@ -7,7 +7,7 @@ from utils import Action, hand_value, basic_strategy
 
 class Agent(ABC):
     _id_counter: int = 1
-    def __init__(self, bankroll: int = 2000, base_bet: int = 20) -> None:
+    def __init__(self, bankroll: int = 2000, base_bet: int = 20, strategy: str = 'basic') -> None:
         self.id: int = Agent._id_counter
         Agent._id_counter += 1
         self.bankroll: int = bankroll
@@ -15,6 +15,7 @@ class Agent(ABC):
         self.hands: List[List[Card]] = []
         self.hand_bets: List[int] = []
         self.broke_round: Optional[int] = None
+        self.strategy: str = strategy # should be either 'basic' or 'counting'
 
     def adjust_bankroll(self, amount: float) -> None:
         self.bankroll += amount
@@ -52,6 +53,9 @@ class Agent(ABC):
 
 
 class BlackjackAgent(Agent):
+    def __init__(self, bankroll: int = 1000, base_bet: int = 100, strategy: str = 'basic'):
+        super().__init__(bankroll, base_bet)
+
     def place_bet(self, true_count: float) -> int:
         bet = self.base_bet * max(1, round(true_count))
         if (self.bankroll - bet) <= 0:
@@ -69,7 +73,7 @@ class BlackjackAgent(Agent):
             if hand_value(hand) == 21 and len(hand) == 2:
                 actions.append(Action.STAND)
             while hand_value(hand) < 21:
-                action = basic_strategy(hand, dealer_upcard)
+                action = basic_strategy(hand, dealer_upcard, self.strategy, env.true_count)
                 actions.append(action)
                 if action == Action.HIT:
                     hand.append(env.deal())
@@ -78,7 +82,7 @@ class BlackjackAgent(Agent):
                         self.split_hand(i, env)
                     else:
                         # look up another option
-                        other_action = basic_strategy(hand, dealer_upcard, allow_split=False)
+                        other_action = basic_strategy(hand, dealer_upcard, self.strategy, env.true_count, allow_split=False)
                         if other_action == Action.HIT:
                             hand.append(env.deal())
                         else:

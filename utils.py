@@ -135,21 +135,68 @@ BASIC_STRATEGY = {
     ('AA', '2'): 'split', ('AA', '3'): 'split', ('AA', '4'): 'split', ('AA', '5'): 'split', ('AA', '6'): 'split', ('AA', '7'): 'split', ('AA', '8'): 'split', ('AA', '9'): 'split', ('AA', '10'): 'split', ('AA', 'A'): 'hit',
 }
 
+DEVIATIONS = {
+    # Hard totals
+    (16, '9'): (4, None, 'stand'),
+    (16, '10'): (0, None, 'stand'),
+    (16, 'A'): (3, None, 'stand'),
+
+    (15, '10'): (4, None, 'hit'),
+    (15, 'A'): (5, None, 'hit'),
+
+    (13, '2'): (None, -1, 'hit'),
+
+    (12, '2'): (3, None, 'stand'),
+    (12, '3'): (2, None, 'stand'),
+    (12, '4'): (None, 0, 'hit'),
+
+    (10, '10'): (4, None, 'stand'),
+    (10, 'A'): (3, None, 'stand'),
+    (9, '2'): (1, None, 'stand'),
+    (9, '7'): (3, None, 'stand'),
+    (8, '6'): (2, None, 'stand'),
+
+    # Soft totals
+    ('A8', '4' ): (3, None, 'hit'),
+    ('A8', '5' ): (1, None, 'hit'),
+    ('A8', '6' ): (None, 0, 'hit'), # if any negative true count, you should hit
+    ('A6', '2' ): (1, None, 'stand'),
+
+    # Pair splitting
+    ('TT', '4'): (6, None, 'split'), # split when >= 6
+    ('TT', '5'): (5, None, 'split'),
+    ('TT', '6'): (4, None, 'split')
+
+}
+
+
+# grabs the action based on true count and deviation
+def get_deviation_action(player_hand, dealer_upcard, true_count):
+    if (player_hand, dealer_upcard) in DEVIATIONS:
+        for min_tc, max_tc, action in DEVIATIONS[(player_hand, dealer_upcard)]:
+            # Check if True Count is within range
+            if (min_tc == 0 or max_tc == 0): # need to check because when 0 it follows basic strategy
+                if (min_tc is None or true_count > min_tc) and (max_tc is None or true_count < max_tc):
+                    return action
+            if (min_tc is None or true_count >= min_tc) and (max_tc is None or true_count <= max_tc):
+                return action
+    return None  # No deviation applies
+
 def hand_value(hand: List[Card]) -> int:
     total: int = 0
-    aces: int = 0
+    aces: int = 0 # keeps track of the number of aces
     for c in hand:
         if c.is_ace():
-            aces += 1
+            aces += 1 # increment the number of aces in the hand, not the actual total count
         total += c.value() # 11 for ace by default
     while total > 21 and aces > 0:
         # calculating soft total if hard total is > 21
-        total -= 10
-        aces -= 1
+        total -= 10 # reduce by 10 because 11 - 1 is 10
+        aces -= 1 # decrement the number of aces to escape the while loop
     return total
 
 
-def basic_strategy(player_hand: List[Card], dealer_card: Card, allow_split=True) -> str:
+def basic_strategy(player_hand: List[Card], dealer_card: Card, strategy: str, true_count: float, allow_split=True) -> str:
     """Determines the action based on the player's hand and dealer's upcard using the basic strategy table."""
     total = hand_value(player_hand)
     dealer_val = dealer_card.get_face()  # Convert to human-readable face value (e.g., '2', '3', ..., '10', 'A')
@@ -180,6 +227,15 @@ def basic_strategy(player_hand: List[Card], dealer_card: Card, allow_split=True)
             hand_key = (17, dealer_val)
         else:
             hand_key = (total, dealer_val)
+    # given deviation or 'counting' strategy
+    if strategy == 'counting':
+        action = get_deviation_action(hand_key[0], hand_key[1], true_count)
+        if action is None:
+            action = Action(BASIC_STRATEGY.get(hand_key, 'stand'))
+        else:
+            action = Action(action)
+    else:
+        action = Action(BASIC_STRATEGY.get(hand_key, 'stand'))
 
     # Look up the action in BASIC_STRATEGY; default to 'stand' if not found
-    return Action(BASIC_STRATEGY.get(hand_key, 'stand'))
+    return action

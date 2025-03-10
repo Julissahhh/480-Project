@@ -145,11 +145,12 @@ def main():
 
     env = BlackjackEnvironment()
     if choice == "0":
-        agents = [HumanAgent(), BlackjackAgent()]
+        agents = [HumanAgent(), BlackjackAgent(), BlackjackAgent(strategy='counting')]
         game = BlackjackGame(env, agents)
         game.run_simulation(num_rounds=5)
     else:
         agents = [BlackjackAgent() for _ in range(3)]
+        agents.append(BlackjackAgent(strategy='counting'))
         game = BlackjackGame(env, agents)
         game.run_simulation(num_rounds=40)
 
