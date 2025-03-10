@@ -141,8 +141,8 @@ DEVIATIONS = {
     (16, '10'): (0, None, 'stand'),
     (16, 'A'): (3, None, 'stand'),
 
-    (15, '10'): (4, None, 'hit'),
-    (15, 'A'): (5, None, 'hit'),
+    (15, '10'): (4, None, 'stand'),
+    (15, 'A'): (5, None, 'stand'),
 
     (13, '2'): (None, -1, 'hit'),
 
