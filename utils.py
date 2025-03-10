@@ -149,7 +149,7 @@ def hand_value(hand: List[Card]) -> int:
     return total
 
 
-def basic_strategy(player_hand: List[Card], dealer_card: Card) -> str:
+def basic_strategy(player_hand: List[Card], dealer_card: Card, allow_split=True) -> str:
     """Determines the action based on the player's hand and dealer's upcard using the basic strategy table."""
     total = hand_value(player_hand)
     dealer_val = dealer_card.get_face()  # Convert to human-readable face value (e.g., '2', '3', ..., '10', 'A')
@@ -157,7 +157,7 @@ def basic_strategy(player_hand: List[Card], dealer_card: Card) -> str:
         # all face cards worth 10
         dealer_val = '10'
     # Format the player's hand for lookup
-    if len(player_hand) == 2 and player_hand[0] == player_hand[1]:  # Pair splitting case
+    if len(player_hand) == 2 and player_hand[0] == player_hand[1] and allow_split:  # Pair splitting case
         face = player_hand[0].get_face()
         if face in ['10', 'J', "Q", "K"]:
             face = "T"
