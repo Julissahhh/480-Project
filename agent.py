@@ -77,9 +77,13 @@ class BlackjackAgent(Agent):
                     if self.can_split(hand, i):
                         self.split_hand(i, env)
                     else:
-                        # Fallback to hit if split not possible
-                        actions[-1] = Action.HIT
-                        hand.append(env.deal())
+                        # look up another option
+                        other_action = basic_strategy(hand, dealer_upcard, allow_split=False)
+                        if other_action == Action.HIT:
+                            hand.append(env.deal())
+                        else:
+                            other_action = Action.STAND
+                        actions[-1] = other_action
                 elif action in (Action.DOUBLE_HIT, Action.DOUBLE_STAND):
                     if self.can_double(hand, i):
                         self.double_hand(i, env)
