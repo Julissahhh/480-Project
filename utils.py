@@ -173,13 +173,14 @@ DEVIATIONS = {
 # grabs the action based on true count and deviation
 def get_deviation_action(player_hand, dealer_upcard, true_count):
     if (player_hand, dealer_upcard) in DEVIATIONS:
-        for min_tc, max_tc, action in DEVIATIONS[(player_hand, dealer_upcard)]:
-            # Check if True Count is within range
-            if (min_tc == 0 or max_tc == 0): # need to check because when 0 it follows basic strategy
-                if (min_tc is None or true_count > min_tc) and (max_tc is None or true_count < max_tc):
-                    return action
-            if (min_tc is None or true_count >= min_tc) and (max_tc is None or true_count <= max_tc):
+        min_tc, max_tc, action = DEVIATIONS[(player_hand, dealer_upcard)]
+        if (min_tc == 0 or max_tc == 0):  # Check because 0 follows basic strategy
+            if (min_tc is None or true_count > min_tc) and (max_tc is None or true_count < max_tc):
                 return action
+
+        if (min_tc is None or true_count >= min_tc) and (max_tc is None or true_count <= max_tc):
+            return action
+
     return None  # No deviation applies
 
 def hand_value(hand: List[Card]) -> int:

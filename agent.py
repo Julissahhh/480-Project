@@ -53,8 +53,8 @@ class Agent(ABC):
 
 
 class BlackjackAgent(Agent):
-    def __init__(self, bankroll: int = 1000, base_bet: int = 100, strategy: str = 'basic'):
-        super().__init__(bankroll, base_bet)
+    def __init__(self, bankroll: int = 10000, base_bet: int = 50, strategy: str = 'basic'):
+        super().__init__(bankroll, base_bet, strategy)
 
     def place_bet(self, true_count: float) -> int:
         bet = self.base_bet * max(1, round(true_count))
@@ -109,7 +109,7 @@ class BlackjackAgent(Agent):
 
 
 class HumanAgent(Agent):
-    def __init__(self, bankroll: int = 1000, base_bet: int = 100):
+    def __init__(self, bankroll: int = 10000, base_bet: int = 50):
         super().__init__(bankroll, base_bet)
         self.ui = ConsoleUI()
 

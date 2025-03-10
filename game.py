@@ -149,10 +149,11 @@ def main():
         game = BlackjackGame(env, agents)
         game.run_simulation(num_rounds=5)
     else:
-        agents = [BlackjackAgent() for _ in range(3)]
-        agents.append(BlackjackAgent(strategy='counting'))
+        agents = [BlackjackAgent() for _ in range(5)]
+        for i in range(5):
+            agents.append(BlackjackAgent(strategy='counting'))
         game = BlackjackGame(env, agents)
-        game.run_simulation(num_rounds=40)
+        game.run_simulation(num_rounds=100)
 
 if __name__ == "__main__":
     main()
