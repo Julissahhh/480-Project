@@ -15,6 +15,14 @@ class Agent(ABC):
         self.hands: List[List[Card]] = []
         self.hand_bets: List[int] = []
         self.broke_round: Optional[int] = None
+        self.stats = {
+            'wins': 0,
+            'losses': 0,
+            'pushes': 0,
+            'total_profit': 0,
+            'rounds_played': 0,
+            'bankroll_history': []
+        }
 
     def adjust_bankroll(self, amount: float) -> None:
         self.bankroll += amount
@@ -52,6 +60,9 @@ class Agent(ABC):
 
 
 class BlackjackAgent(Agent):
+    def __init__(self, bankroll=2000, base_bet=20, strategy='basic'):
+        super().__init__(bankroll=bankroll, base_bet=base_bet)
+        self.strategy = strategy
     def place_bet(self, true_count: float) -> int:
         bet = self.base_bet * max(1, round(true_count))
         if (self.bankroll - bet) <= 0:
