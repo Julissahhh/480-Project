@@ -209,10 +209,10 @@ class BlackjackGame:
                     f"{agent.bankroll:.2f}\n"
                 )
 
-def simulate_games(num_sims: int, rounds_per: int, num_agents: int) -> None:
+def simulate_games(num_sims: int, rounds_per: int) -> None:
     for sim_id in range(num_sims):
         env = BlackjackEnvironment()
-        agents = [BlackjackAgent() for _ in range(num_agents)]
+        agents = [BlackjackAgent(), BlackjackAgent(strategy='counting')]
         game = BlackjackGame(env, agents)
         game.set_verbose(False)
         game.run_simulation(rounds_per, sim_id=sim_id)
@@ -238,7 +238,7 @@ def main():
         game = BlackjackGame(env, agents)
         game.run_simulation(num_rounds=10)
     else:
-        simulate_games(100, 2000, 3)
+        simulate_games(100, 2000)
 
 if __name__ == "__main__":
     main()
