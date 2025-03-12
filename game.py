@@ -5,6 +5,7 @@ from utils import hand_value
 from environment import BlackjackEnvironment, Card
 from agent import BlackjackAgent, HumanAgent, Agent
 
+
 class BlackjackGame:
     def __init__(self, env: BlackjackEnvironment, agents: List[Agent]) -> None:
         self.env: BlackjackEnvironment = env
@@ -38,7 +39,6 @@ class BlackjackGame:
             agent.hands = [[self.env.deal(), self.env.deal()]]  # Initialize with one hand
         return dealer_upcard
 
-
     def play_agent_turns(self, dealer_upcard: Card):
         for agent in self.agents:
             if self.verbose:
@@ -47,7 +47,7 @@ class BlackjackGame:
             if self.verbose:
                 print(f"Actions taken: {actions}")
                 for i, hand in enumerate(agent.hands):
-                    self.ui.display_hand(hand, f"Player {agent.id} Hand {i+1}")
+                    self.ui.display_hand(hand, f"Player {agent.id} Hand {i + 1}")
 
     def play_dealer_turn(self) -> None:
         if self.verbose:
@@ -134,7 +134,7 @@ class BlackjackGame:
         self.agents = remaining
 
     # game.py
-    def run_simulation(self, num_rounds: Optional[int] = None, sim_id: int =0) -> None:
+    def run_simulation(self, num_rounds: Optional[int] = None, sim_id: int = 0) -> None:
         round_num = 1
         while (num_rounds is None or round_num <= num_rounds) and self.agents:
             if self.verbose:
@@ -175,7 +175,7 @@ class BlackjackGame:
             print(f"  Final Bankroll: ${agent.bankroll:.2f}\n")
 
         # Write to CSV with append mode and conditional header
-        filename = "blackjack_stats.csv"
+        filename = "strat_comparisons.csv"
         header_exists = os.path.exists(filename) and os.stat(filename).st_size > 0
 
         with open(filename, "a", newline="") as f:
@@ -209,19 +209,23 @@ class BlackjackGame:
                     f"{agent.bankroll:.2f}\n"
                 )
 
+
 def simulate_games(num_sims: int, rounds_per: int) -> None:
     for sim_id in range(num_sims):
         env = BlackjackEnvironment()
-        agents = [BlackjackAgent(), BlackjackAgent(strategy='counting')]
+        agents = [BlackjackAgent(strategy='unskilled'), BlackjackAgent(strategy='basic'),
+                  BlackjackAgent(strategy='counting')]
         game = BlackjackGame(env, agents)
         game.set_verbose(False)
         game.run_simulation(rounds_per, sim_id=sim_id)
+
 
 def play_game(num_rounds: int, num_agents: int) -> None:
     env = BlackjackEnvironment()
     agents = [HumanAgent(), *[BlackjackAgent() for _ in range(num_agents)]]
     game = BlackjackGame(env, agents)
     game.run_simulation(num_rounds)
+
 
 def main():
     print("Blackjack Game")
@@ -234,11 +238,12 @@ def main():
         game.run_simulation(num_rounds=5)
     elif choice == "1":
         env = BlackjackEnvironment()
-        agents = [BlackjackAgent() for _ in range(3)]
+        agents = [BlackjackAgent(strategy='unskilled'), BlackjackAgent(strategy='basic'), BlackjackAgent(strategy='counting')]
         game = BlackjackGame(env, agents)
         game.run_simulation(num_rounds=10)
     else:
-        simulate_games(100, 2000)
+        simulate_games(4000, 2000)
+
 
 if __name__ == "__main__":
     main()

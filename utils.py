@@ -168,20 +168,17 @@ DEVIATIONS = {
     ('TT', '6'): (4, None, 'split')
 
 }
-
-
-# grabs the action based on true count and deviation
-def get_deviation_action(player_hand, dealer_upcard, true_count):
-    if (player_hand, dealer_upcard) in DEVIATIONS:
-        min_tc, max_tc, action = DEVIATIONS[(player_hand, dealer_upcard)]
+# Get deviation action
+def get_deviation_action(hand_key, true_count):
+    if hand_key in DEVIATIONS:
+        min_tc, max_tc, action = DEVIATIONS[hand_key]
         if (min_tc == 0 or max_tc == 0):  # Check because 0 follows basic strategy
             if (min_tc is None or true_count > min_tc) and (max_tc is None or true_count < max_tc):
                 return action
-
         if (min_tc is None or true_count >= min_tc) and (max_tc is None or true_count <= max_tc):
             return action
+    return None
 
-    return None  # No deviation applies
 
 def hand_value(hand: List[Card]) -> int:
     total: int = 0
@@ -197,46 +194,63 @@ def hand_value(hand: List[Card]) -> int:
     return total
 
 
-def basic_strategy(player_hand: List[Card], dealer_card: Card, strategy: str, true_count: float, allow_split=True) -> str:
-    """Determines the action based on the player's hand and dealer's upcard using the basic strategy table."""
+# Unskilled strategy
+def unskilled_strategy(player_hand: List[Card]) -> Action:
     total = hand_value(player_hand)
-    dealer_val = dealer_card.get_face()  # Convert to human-readable face value (e.g., '2', '3', ..., '10', 'A')
-    if dealer_val in ['10', 'J', "Q", "K"]:
-        # all face cards worth 10
-        dealer_val = '10'
-    # Format the player's hand for lookup
-    if len(player_hand) == 2 and player_hand[0] == player_hand[1] and allow_split:  # Pair splitting case
+    if len(player_hand) == 2 and player_hand[0] == player_hand[1]:
         face = player_hand[0].get_face()
-        if face in ['10', 'J', "Q", "K"]:
-            face = "T"
+        if face in ['8', 'A']:
+            return Action.SPLIT
+    return Action.HIT if total < 17 else Action.STAND
+
+
+# Basic strategy
+def basic_strategy(player_hand: List[Card], dealer_card: Card, allow_split=True) -> Action:
+    total = hand_value(player_hand)
+    dealer_val = dealer_card.get_face()
+    if dealer_val in ['10', 'J', 'Q', 'K']:
+        dealer_val = '10'
+
+    if len(player_hand) == 2 and player_hand[0] == player_hand[1] and allow_split:
+        face = player_hand[0].get_face()
+        face = 'T' if face in ['10', 'J', 'Q', 'K'] else face
         hand_key = (f"{face}{face}", dealer_val)
-
-    elif any(c.is_ace() for c in player_hand) and len(player_hand) == 2:  # Soft total case
+    elif any(c.is_ace() for c in player_hand) and len(player_hand) == 2:
         non_ace_card = next(c for c in player_hand if not c.is_ace())
-        face = non_ace_card.get_face()
-        if non_ace_card.value() > 8:
-            # default to the same behavior for soft totals above 18
-            face = "8"
+        face = str(min(non_ace_card.value(), 8))
         hand_key = (f"A{face}", dealer_val)
-
-    else:  # Hard total case
-        if total < 8:
-            # all values under 8 do the same thing
-            hand_key = (8, dealer_val)
-        elif total > 17:
-            # stand for greater than 17
-            hand_key = (17, dealer_val)
-        else:
-            hand_key = (total, dealer_val)
-    # given deviation or 'counting' strategy
-    if strategy == 'counting':
-        action = get_deviation_action(hand_key[0], hand_key[1], true_count)
-        if action is None:
-            action = Action(BASIC_STRATEGY.get(hand_key, 'stand'))
-        else:
-            action = Action(action)
     else:
-        action = Action(BASIC_STRATEGY.get(hand_key, 'stand'))
+        hand_key = (max(8, min(total, 17)), dealer_val)
 
-    # Look up the action in BASIC_STRATEGY; default to 'stand' if not found
-    return action
+    return Action(BASIC_STRATEGY.get(hand_key, 'stand'))
+
+
+# Counting strategy (builds upon basic strategy)
+def counting_strategy(player_hand: List[Card], dealer_card: Card, true_count: float) -> Action:
+    total = hand_value(player_hand)
+    dealer_val = dealer_card.get_face()
+    if dealer_val in ['10', 'J', 'Q', 'K']:
+        dealer_val = '10'
+
+    if len(player_hand) == 2 and player_hand[0] == player_hand[1]:
+        face = player_hand[0].get_face()
+        face = 'T' if face in ['10', 'J', 'Q', 'K'] else face
+        hand_key = (f"{face}{face}", dealer_val)
+    elif any(c.is_ace() for c in player_hand) and len(player_hand) == 2:
+        non_ace_card = next(c for c in player_hand if not c.is_ace())
+        face = str(min(non_ace_card.value(), 8))
+        hand_key = (f"A{face}", dealer_val)
+    else:
+        hand_key = (max(8, min(total, 17)), dealer_val)
+
+    deviation_action = get_deviation_action(hand_key, true_count)
+    return Action(deviation_action) if deviation_action else basic_strategy(player_hand, dealer_card)
+
+# General function to recommend an action
+def recommend_action(player_hand: List[Card], dealer_card: Card, true_count: float = 0, strategy: str = 'basic', allow_split=True) -> Action:
+    if strategy == 'unskilled':
+        return unskilled_strategy(player_hand)
+    elif strategy == 'counting':
+        return counting_strategy(player_hand, dealer_card, true_count)
+    else:
+        return basic_strategy(player_hand, dealer_card, allow_split=allow_split)

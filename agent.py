@@ -2,12 +2,12 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 from environment import Card, BlackjackEnvironment
 from ui import ConsoleUI
-from utils import Action, hand_value, basic_strategy
+from utils import Action, hand_value, recommend_action
 
 
 class Agent(ABC):
     _id_counter: int = 1
-    def __init__(self, bankroll: int = 2000, base_bet: int = 20, strategy: str = 'basic') -> None:
+    def __init__(self, bankroll: int = 2000, base_bet: int = 20) -> None:
         self.id: int = Agent._id_counter
         Agent._id_counter += 1
         self.bankroll: int = bankroll
@@ -31,9 +31,10 @@ class Agent(ABC):
         self.hand_bets = []
 
     def can_split(self, hand: List[Card], hand_index: int) -> bool:
+        split_cost = self.hand_bets[hand_index] * 2
         return (len(hand) == 2 and 
                 hand[0] == hand[1] and 
-                self.bankroll >= self.hand_bets[hand_index])
+                self.bankroll > split_cost)
     
     def split_hand(self, hand_index: int, env: BlackjackEnvironment) -> None:
         original_hand = self.hands[hand_index]
@@ -48,7 +49,8 @@ class Agent(ABC):
         self.hands[hand_index].append(env.deal())
     
     def can_double(self, hand: List[Card], hand_index: int) -> bool:
-        return len(hand) == 2 and self.bankroll >= self.hand_bets[hand_index]   
+        double_cost = self.hand_bets[hand_index] * 2  # Cost of doubling
+        return len(hand) == 2 and self.bankroll >= double_cost
     
     @abstractmethod
     def place_bet(self, true_count: float) -> int:
@@ -60,16 +62,44 @@ class Agent(ABC):
 
 
 class BlackjackAgent(Agent):
-    def __init__(self, bankroll: int = 10000, base_bet: int = 50, strategy: str = 'basic'):
+    def __init__(self, bankroll: int = 10000, base_bet: int = 30, strategy: str = 'basic'):
         super().__init__(bankroll, base_bet)
         self.strategy = strategy
 
     def place_bet(self, true_count: float) -> int:
-        bet = self.base_bet * max(1, round(true_count))
-        if (self.bankroll - bet) <= 0:
-            bet = max(self.bankroll, 0)
-        self.hand_bets.append(bet)  # Track current bet
-        return bet
+        """Places a bet based on the agent's strategy."""
+
+        if self.strategy in ["basic", "unskilled"]:
+            bet = self.base_bet  # Always bet the base amount
+
+        elif self.strategy == "counting":
+            if true_count <= 1:
+                bet_multiplier = 1
+            elif 2 <= true_count < 3:
+                bet_multiplier = 2  # Only double bet at TC 2
+            elif 3 <= true_count < 5:
+                bet_multiplier = 3  # Slight increase
+            elif 5 <= true_count < 7:
+                bet_multiplier = 5  # Mid-range jump
+            else:
+                bet_multiplier = 7  # Cap at 7x instead of 10x for safety
+
+            if self.bankroll < 5000:  # If bankroll is below 50% of starting value
+                bet_multiplier = max(1, bet_multiplier // 2)  # Halve the bet multiplier
+
+            bet = self.base_bet * max(bet_multiplier, 1)
+
+        else:
+            raise ValueError(f"Unknown strategy: {self.strategy}")
+
+        # Ensure bet does not exceed available bankroll
+        bet = min(bet, self.bankroll)
+        bet = max(bet, 0)
+
+        # Track the bet
+        self.hand_bets.append(bet)
+
+        return int(bet)  # Ensure bet is an integer (casinos require whole numbers)
 
     def play_turn(self, dealer_upcard: Card, env: BlackjackEnvironment) -> List[List[str]]:
         all_actions: List[List[str]] = []
@@ -81,7 +111,7 @@ class BlackjackAgent(Agent):
             if hand_value(hand) == 21 and len(hand) == 2:
                 actions.append(Action.STAND)
             while hand_value(hand) < 21:
-                action = basic_strategy(hand, dealer_upcard, self.strategy, env.true_count)
+                action = recommend_action(hand, dealer_upcard, env.true_count, self.strategy)
                 actions.append(action)
                 if action == Action.HIT:
                     hand.append(env.deal())
@@ -90,7 +120,7 @@ class BlackjackAgent(Agent):
                         self.split_hand(i, env)
                     else:
                         # look up another option
-                        other_action = basic_strategy(hand, dealer_upcard, self.strategy, env.true_count, allow_split=False)
+                        other_action = recommend_action(hand, dealer_upcard, env.true_count, self.strategy, allow_split=False)
                         if other_action == Action.HIT:
                             hand.append(env.deal())
                         else:
