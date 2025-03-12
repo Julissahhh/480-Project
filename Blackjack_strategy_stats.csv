@@ -1,5 +1,4 @@
-Strategy,Wins,Losses,Pushes,Mean_Total_Profit,Median_Total_Profit,Min_Total_Profit,Max_Total_Profit,Mean_Final_Bankroll,Median_Final_Bankroll,Min_Final_Bankroll,Max_Final_Bankroll,Mean_Profit_Per_Round,Win Rate,Loss Rate,Push Rate,Probability of Ruin
-basic,3574297,3925214,705835,-149.44,-135.0,-4950.0,4920.0,9850.55,9865.0,5050.0,14920.0,-0.075,0.4356,0.478,0.086,
-counting,3573547,3941152,691155,120.72,75.0,-10000.0,15630.0,10120.72,10075.0,0.0,25630.0,0.06,0.4354,0.480,0.084,0.00375
-unskilled,3359732,3951731,791747,-2959.93,-2940.0,-8880.0,2385.0,7040.06,7060.0,1120.0,12385.0,-1.48,0.4146,0.487,0.097,
-,,,,,,,,,,,,,,,,
+Strategy,Mean_Total_Profit,Mean_Final_Bankroll,Mean_Profit_Per_Round
+basic,-149.362977766675,9850.637022233324,-0.07762178366225332
+counting,120.72195853110168,10120.721958531101,0.06776417686734948
+unskilled,-2957.7242068448663,7042.275793155133,-1.4798775918061453
