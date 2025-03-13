@@ -1,6 +1,7 @@
 from typing import List
 from environment import Card
-from utils import Action, hand_value
+from utils import Action, hand_value, recommend_action
+
 
 # A bit of an experiment
 class ConsoleUI:
@@ -16,11 +17,18 @@ class ConsoleUI:
                 print("Please enter a valid number")
 
     @staticmethod
-    def prompt_action(valid_actions: List[Action]) -> Action:
+    def prompt_action(valid_actions: List[Action], hand: List[Card], dealer_upcard: Card) -> Action:
+        suggested = recommend_action(hand, dealer_upcard)
+        if suggested in [Action.DOUBLE_HIT, Action.DOUBLE_STAND]:
+            suggested = Action.DOUBLE
+        print(f"Suggested Move: {suggested.value}")
         while True:
             action_str = input(f"Action ({'/'.join(a.value for a in valid_actions)}): ").lower()
             try:
-                return Action(action_str)
+                action = Action(action_str)
+                if action not in valid_actions:
+                    raise ValueError
+                return action
             except ValueError:
                 print("Invalid action! Please choose a valid option.")
 

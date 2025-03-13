@@ -13,6 +13,7 @@ class Action(str, Enum):
     STAND = "stand"
     DOUBLE_HIT = "double_hit"     # Dh = "Double if possible, otherwise Hit"
     DOUBLE_STAND = "double_stand" # Ds = "Double if possible, otherwise Stand"
+    DOUBLE = "double"
     SPLIT = "split"
 
     def __repr__(self):

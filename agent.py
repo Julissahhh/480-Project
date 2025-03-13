@@ -1,3 +1,4 @@
+import time
 from abc import ABC, abstractmethod
 from typing import List, Optional
 from environment import Card, BlackjackEnvironment
@@ -152,6 +153,7 @@ class HumanAgent(Agent):
         self.ui = ConsoleUI()
 
     def place_bet(self, true_count: float) -> int:
+        print("--- betting ---")
         print(f"Current True Count: {true_count:.2f}")
         bet = self.ui.prompt_bet(int(self.bankroll))
         self.hand_bets.append(bet)
@@ -166,15 +168,14 @@ class HumanAgent(Agent):
             while hand_value(hand) < 21:
                 self.ui.display_hand(hand, f"Your Hand {i + 1}")
                 valid_actions = self.get_valid_actions(hand, i)
-                action = self.ui.prompt_action(valid_actions)
+                action = self.ui.prompt_action(valid_actions, hand, dealer_upcard)
                 actions.append(action)
 
                 if action == Action.HIT:
                     hand.append(env.deal())
                 elif action == Action.SPLIT and Action.SPLIT in valid_actions:
                     self.split_hand(i, env)
-                    break
-                elif action in (Action.DOUBLE_HIT, Action.DOUBLE_STAND) and action in valid_actions:
+                elif action == Action.DOUBLE and action in valid_actions:
                     if self.can_double(hand, i):
                         self.double_hand(i, env)
                         break
@@ -187,13 +188,14 @@ class HumanAgent(Agent):
                     break  # STAND
             all_actions.append(actions)
             i += 1
+            time.sleep(0.3)
         return all_actions
     
     def get_valid_actions(self, hand: List[Card], hand_index: int) -> List[Action]:
         valid = [Action.HIT, Action.STAND]
         if self.can_double(hand, hand_index):
             # Add both double variants as valid options.
-            valid.extend([Action.DOUBLE_HIT, Action.DOUBLE_STAND])
+            valid.append(Action.DOUBLE)
         if self.can_split(hand, hand_index):
             valid.append(Action.SPLIT)
         return valid

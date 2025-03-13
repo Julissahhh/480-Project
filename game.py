@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import List, Optional
 from ui import ConsoleUI
 from utils import hand_value
@@ -134,7 +135,7 @@ class BlackjackGame:
         self.agents = remaining
 
     # game.py
-    def run_simulation(self, num_rounds: Optional[int] = None, sim_id: int = 0) -> None:
+    def run_simulation(self, num_rounds: Optional[int] = None, sim_id: int = 0, save_data=False) -> None:
         round_num = 1
         while (num_rounds is None or round_num <= num_rounds) and self.agents:
             if self.verbose:
@@ -147,6 +148,10 @@ class BlackjackGame:
             self.play_dealer_turn()
             self.finalize_round(round_num)
             round_num += 1
+            if self.verbose and any(isinstance(agent, HumanAgent) for agent in self.agents):
+                stuff = input("\nPress Enter to continue to the next round...")
+                if stuff.lower() == "quit":
+                    sys.exit()
         if self.verbose:
             print("\n======== Game Summary ========")
             for agent in self.dropped_agents:
@@ -174,40 +179,41 @@ class BlackjackGame:
             print(f"  Avg Profit/Round: ${avg_profit:.2f}")
             print(f"  Final Bankroll: ${agent.bankroll:.2f}\n")
 
-        # Write to CSV with append mode and conditional header
-        filename = "strat_comparisons.csv"
-        header_exists = os.path.exists(filename) and os.stat(filename).st_size > 0
+        if save_data:
+            # Write to CSV with append mode and conditional header
+            filename = "strat_comparisons.csv"
+            header_exists = os.path.exists(filename) and os.stat(filename).st_size > 0
 
-        with open(filename, "a", newline="") as f:
-            # Write header only if file is new/empty
-            if not header_exists:
-                f.write(
-                    "Sim ID,Sample,Agent ID,Strategy,Wins,Losses,Pushes,Total Profit,Avg Profit/Round,Final Bankroll\n")
+            with open(filename, "a", newline="") as f:
+                # Write header only if file is new/empty
+                if not header_exists:
+                    f.write(
+                        "Sim ID,Sample,Agent ID,Strategy,Wins,Losses,Pushes,Total Profit,Avg Profit/Round,Final Bankroll\n")
 
-            # Write data rows for all agents
-            for agent in all_agents:
-                total_hands = agent.stats['wins'] + agent.stats['losses'] + agent.stats['pushes']
-                if total_hands == 0:
-                    continue
+                # Write data rows for all agents
+                for agent in all_agents:
+                    total_hands = agent.stats['wins'] + agent.stats['losses'] + agent.stats['pushes']
+                    if total_hands == 0:
+                        continue
 
-                avg_profit = agent.stats['total_profit'] / agent.stats['rounds_played'] if agent.stats[
-                    'rounds_played'] else 0
+                    avg_profit = agent.stats['total_profit'] / agent.stats['rounds_played'] if agent.stats[
+                        'rounds_played'] else 0
 
-                # Get strategy type (placeholder for future implementation)
-                strategy = getattr(agent, "strategy", "basic")
+                    # Get strategy type (placeholder for future implementation)
+                    strategy = getattr(agent, "strategy", "basic")
 
-                f.write(
-                    f"{sim_id},"
-                    f"{num_rounds},"  # Sample size
-                    f"{agent.id},"
-                    f"{strategy},"
-                    f"{agent.stats['wins']},"
-                    f"{agent.stats['losses']},"
-                    f"{agent.stats['pushes']},"
-                    f"{agent.stats['total_profit']:.2f},"
-                    f"{avg_profit:.2f},"
-                    f"{agent.bankroll:.2f}\n"
-                )
+                    f.write(
+                        f"{sim_id},"
+                        f"{num_rounds},"  # Sample size
+                        f"{agent.id},"
+                        f"{strategy},"
+                        f"{agent.stats['wins']},"
+                        f"{agent.stats['losses']},"
+                        f"{agent.stats['pushes']},"
+                        f"{agent.stats['total_profit']:.2f},"
+                        f"{avg_profit:.2f},"
+                        f"{agent.bankroll:.2f}\n"
+                    )
 
 
 def simulate_games(num_sims: int, rounds_per: int) -> None:
@@ -217,7 +223,7 @@ def simulate_games(num_sims: int, rounds_per: int) -> None:
                   BlackjackAgent(strategy='counting')]
         game = BlackjackGame(env, agents)
         game.set_verbose(False)
-        game.run_simulation(rounds_per, sim_id=sim_id)
+        game.run_simulation(rounds_per, sim_id=sim_id, save_data=True)
 
 
 def play_game(num_rounds: int, num_agents: int) -> None:
